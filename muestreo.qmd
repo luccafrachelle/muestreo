@@ -1,0 +1,26 @@
+---
+title: "muestreo"
+format: html
+editor: visual
+---
+
+## 
+
+```{r}
+df = read_csv("Montevideo GR5.csv")
+```
+
+## Parte 1
+
+```{r}
+N = nrow(df)
+z_star = 1.96  
+sigma = 0.5
+moe = 0.03
+deff = 1.5
+
+n0 <- (z_star * sigma / moe)^2
+n1 <- n0 / (1 + (n0 - 1) / N)
+neff <- n1 * deff
+print(neff)
+```
