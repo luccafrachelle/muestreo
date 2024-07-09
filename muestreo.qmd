@@ -1,8 +1,14 @@
 ---
-title: "muestreo"
+title: "Entrega Final - Muestreo I"
+author: "Lucca Frachelle, Cecilia Waksman"
+date: "09-07-24"
 format: html
 editor: visual
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ```{r}
 library(tidyverse)
@@ -11,12 +17,33 @@ library(survey)
 library(knitr)
 ```
 
+## Introducción
+
+El objetivo de este trabajo es seleccionar una muestra aleatoria de hogares de Montevideo bajo un diseño estratificado, por conglomerados y en dos etapas de selección. Los estratos son 5 y son definidos a nivel socioeconómico (1 = Bajo, 2 = Medio Bajo, 3 = Medio, 4 = Medio Alto, 5 = Alto). LA UPM es la manzana y la USM es el hogar.
+
+\
+
+Las UPM son seleccionadas bajo un diseño PPS sin reemplazo utilizando como medida de tamaño la cantidad de personas por UPM. Luego, dentro de cada UPM seleccionada en la primera etapa, se deben seleccionar 5 viviendas dentro de cada UPM con igual probabilidad de selección.
+
+\
+
+Una vez seleccionada la muestra, se computarán estimaciones puntuales para distintos parámetros (junto con medidas de calidad de las mismas). Las estimaciones para dichos parámetros pueden ser calculadas, ya sea, a nivel de toda la población, como para distintos dominios/áreas de estimación.
 
 ```{r}
 df = read_csv("Montevideo GR5.csv")
 ```
 
 ## Parte 1
+
+Calcule el tamaño de muestra para obtener un margen de error de $\pm$3% a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
+
+\
+
+Paso 1) $n_0=(\frac{z^*\sigma}{moe})^2 = (\frac{1.96 \times 0.5}{0.03})^2$
+ 
+Paso 2) $n_1=\frac{n_0}{1+(n_0/N)}$
+ 
+Paso 3) $n_{deff}=n_1 deff$
 
 ```{r}
 N = nrow(df)
@@ -26,12 +53,18 @@ moe = 0.03
 deff = 1.5
 
 n0 <- (z_star * sigma / moe)^2
-n1 <- n0 / (1 + (n0 - 1) / N)
-neff <- n1 * deff
-print(round(neff))
+n1 <- n0 / (1 + (n0/N))
+neff <- round(n1 * deff)
+print(neff)
 ```
 
 ## Parte 2
+
+Con el tamaño de muestra calculado en la parte anterior, asigne el mismo por estrato de forma óptima, utilizando como variable auxiliar el ingreso del hogar.
+
+\
+
+Tamaño de muestra por estrato según asignación óptima: $n_h = n\times \frac{N_h sd_{U_h}[x]}{\sum_{h=1}^HN_h sd_{U_h}[x]}$, donde, $x\propto y$ aproximadamente, *x* es la variable auxiliar y *y* la variable de interés.
 
 ```{r}
 estratos = df %>% group_by(estrato) %>% summarise(N=n(),
@@ -46,54 +79,114 @@ estratos %>% kable()
 
 ## Parte 3
 
+En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma. 
+
+La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzan en la segunda etapa, en este caso 5.
+
+En la segunda etapa, se seleccionan de cada manzana 5 hogares mediante un *diseño simple sin reposición* con probabilidades de inclusión $\frac{n_h}{N_h}$, según el estrato.
+
 ```{r}
+U_upm= df %>% group_by(across(all_of(c("estrato", "manzana")))) %>% summarise(Mi=sum(cant_personas), .groups = "keep", MOS=n())#cantidad de personas por manzana, cantidad de hogares por manzana
+```
+
+
+```{r}
+#Primera etapa
 set.seed(5)
-muestra_final = list()
-for(i in 1:nrow(estratos)) {
-  estrato_i = estratos$estrato[i]
-  n_opt_i = estratos$n_opt[i]
-  
-  df_estrato = df %>% filter(estrato == estrato_i)
-  
-  UPMs = unique(df_estrato$manzana)
-  m = round(n_opt_i / 10)  
-  
-  s_upm = sampling::cluster(data=df_estrato,
-                            clustername='manzana',
-                            size=m,
-                            method='srswor')
-  s_upm_data = getdata(df_estrato, s_upm) %>% 
-    rename(prob_upm=Prob)
-  
-  s_usm_data_list = list()
-  
-  for(upm in unique(s_upm_data$manzana)) {
-    df_upm = s_upm_data %>% filter(manzana == upm)
-    
-    s_usm = sampling::strata(data=df_upm,
-                   stratanames='manzana',
-                   size=min(10, nrow(df_upm)),  
-                   method='srswor')
-    
-    s_usm_data = getdata(df_upm, s_usm) %>% 
-      rename(prob_usm=Prob)
-    
-    s_usm_data_list[[upm]] = s_usm_data
-  }
-  
-  s_usm_data = bind_rows(s_usm_data_list)
-  
-  s_usm_data = s_usm_data %>% mutate(prob_total=prob_upm * prob_usm,
-                                     w=1 / prob_total)
-  
-  muestra_final[[i]] = s_usm_data
-}
-s = bind_rows(muestra_final)
+s_upm=sampling::strata(data=U_upm,
+                    stratanames = "estrato",
+                    size=round(estratos$n_opt/5),
+                    method='systematic',
+                    pik=U_upm$Mi,
+                    description=T)
+
+#Selecciono neff/5 manzanas con el diseño PPS sistemático
+s_upm = getdata(U_upm,s_upm) %>% 
+  rename(prob_upm=Prob)
 
 ```
 
 
+```{r}
+#Segunda etapa
+U_usm = df %>% left_join(s_upm %>% select(manzana, prob_upm), by="manzana") %>% filter(is.na(prob_upm)==FALSE)
+
+U_usm= U_usm %>% arrange(manzana)
+set.seed(5)
+s= sampling::strata(data=U_usm,
+                    stratanames = 'manzana',
+                    size=rep(5,nrow(U_usm)),
+                    method='srswor')
+#trato cada conglomerado (manzana) como un estrato y saco la muestra de 5  hogares en cada uno
+s = getdata(U_usm,s) %>% 
+  rename(prob_usm=Prob)
+
+```
+
+
+
+#Primer intento
+```{r}
+# set.seed(5)
+# muestra_final = list()
+# for(i in 1:nrow(estratos)) {
+#   estrato_i = estratos$estrato[i]
+#   n_opt_i = estratos$n_opt[i]
+#   
+#   df_estrato = df %>% filter(estrato == estrato_i)
+#   
+#   UPMs = unique(df_estrato$manzana)
+#   m = round(n_opt_i / 10)  
+#   
+#   s_upm = sampling::cluster(data=df_estrato,
+#                             clustername='manzana',
+#                             size=m,
+#                             method='srswor')
+#   s_upm_data = getdata(df_estrato, s_upm) %>% 
+#     rename(prob_upm=Prob)
+#   
+#   s_usm_data_list = list()
+#   
+#   for(upm in unique(s_upm_data$manzana)) {
+#     df_upm = s_upm_data %>% filter(manzana == upm)
+#     
+#     s_usm = sampling::strata(data=df_upm,
+#                    stratanames='manzana',
+#                    size=min(10, nrow(df_upm)),  
+#                    method='srswor')
+#     
+#     s_usm_data = getdata(df_upm, s_usm) %>% 
+#       rename(prob_usm=Prob)
+#     
+#     s_usm_data_list[[upm]] = s_usm_data
+#   }
+#   
+#   s_usm_data = bind_rows(s_usm_data_list)
+#   
+#   s_usm_data = s_usm_data %>% mutate(prob_total=prob_upm * prob_usm,
+#                                      w=1 / prob_total)
+#   
+#   muestra_final[[i]] = s_usm_data
+# }
+# s = bind_rows(muestra_final)
+
+```
+
 ## Parte 4
+
+Calcular la estimación puntual del ingreso promedio, proporción de hogares pobres y total de personas, a nivel de todaa la población. PAra cada estimación se debe computar: error estándar (SE), coeficiente de variación, efecto de diseño y márgenes de error al 95%.
+
+\
+
+Estimador Horvitz-Thompson en un diseño estratificado:
+
+- Total: $\hat{Y}_{HT}=\sum_{h=1}^H\sum_{i\in s}w_{hi}y_{hi}$
+
+- Promedio: $\hat{\bar{Y}}_{HT}=\frac{1}{N}\hat{Y}_{HT}=\frac{1}{N}\sum_{h=1}^H\sum_{i\in s_h}w_{hi}y_{hi}$
+
+- Proporsión: $\hat{\bar{Y}}_{HT}$ con *y* una variable booleana. 
+
+
 ```{r}
 s= s %>% mutate(prob_total=prob_upm*prob_usm,
                 w=1/prob_total)
@@ -104,32 +197,38 @@ ps1= s %>% svydesign(strata=~ estrato , ids=~manzana+ID,
                      fpc=~prob_upm+prob_usm,
                      weights=~w,
                      data=.)
+
 ```
 
-## Ingreso per cápita
+**Ingreso per cápita**
+
 ```{r}
-res <- svymean(~ingreso_hog, ps1)
+res <- svymean(~ingreso_hog, ps1, deff=T)
 conf_int <- confint(res)
 cv_res <- cv(res)
+deff_res <- deff(res)
 
 resultados <- data.frame(
-  Estadística = c("Media del ingreso", "Límite inferior del IC", "Límite superior del IC", "Desvio", "Coeficiente de variación"),
-  Valor = c(coef(res), conf_int[1], conf_int[2], SE(res), cv_res)
+  Estadística = c("Media del ingreso per cápita", "Límite inferior del IC", "Límite superior del IC", "Desvio", "Coeficiente de variación"),
+  Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res), deff_res, cv_res), 3)
   
 )
 
 resultados %>% kable()
 
 ```
-## Hogares pobres
+
+**Hogares pobres**
+
 ```{r}
 res = svymean(~pobre, ps1)
 conf_int = confint(res)
 cv_res = cv(res)
+deff_res <- deff(res)
 
 resultados = data.frame(
   Estadística = c("Proporción de hogares pobres", "Límite inferior del IC", "Límite superior del IC", "Desvio" ,"Coeficiente de variación"),
-  Valor = c(coef(res), conf_int[1], conf_int[2],SE(res) ,  cv_res)
+  Valor = round(c(coef(res), conf_int[1], conf_int[2],SE(res), deff_res,  cv_res), 4)
   
 )
 
@@ -138,28 +237,31 @@ resultados %>% kable()
 
 ```
 
-## Cantidad personas
+**Total de Personas**
 
 ```{r}
 res = svytotal(~cant_personas ,ps1)
 conf_int = confint(res)
 cv_res = cv(res)
+deff_res <- deff(res)
 
 resultados = data.frame(
   Estadística = c("Total de personas", "Límite inferior del IC", "Límite superior del IC", " Desvio" ,  "Coeficiente de variación"),
-  Valor = c(coef(res), conf_int[1], conf_int[2],SE(res) ,  cv_res)
+  Valor = round(c(coef(res), conf_int[1], conf_int[2],SE(res), deff_res,  cv_res), 3)
   
 )
+
+resultados %>% kable()
 ```
 
+Falta interpretar resultados
+## Parte 5
 
-## Parte 5 
+La varianza a partir de la cual se calcula el desvío estándar en la parte anterior es la calculada como: $\frac{1}{n_I(n_I -1)}\sum_{h=1}^{H}\sum_{i\in s_h}(\hat{Y}^*_j n_{I} - \hat{Y}_h)^2$, donde $\hat{Y}^*_j$ es la estimación del parámetro en la j-ésima UPM, $\hat{Y}_h$ la estimación de cada estrato y $n_I$ la cantidad de UPMs de la miuestra
 
-Hay que buscar que es 
+??? mirar mejor despues
 
-
-
-## Parte 6 
+## Parte 6
 
 ```{r}
 res = svyratio(~ingreso_hog, ~cant_personas, ps1)
@@ -177,20 +279,18 @@ resultados %>% kable()
 
 
 ```
-## Parte 7 
+
+## Parte 7
 
 ### Jackknife
 
 ```{r}
-```{r}
 jkn=as.svrepdesign(design=ps1,type='JKn')
 ```
-
 
 ```{r}
 svyratio(~ingreso_hog, ~cant_personas, jkn)
 ```
-
 
 ```{r}
 te=svyratio(~ingreso_hog, ~cant_personas, jkn , return.replicates=TRUE)
@@ -203,7 +303,6 @@ tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fil
 
 ### Bootstrap
 
-```{r}
 ```{r}
 boot=as.svrepdesign(design=ps1, type='subbootstrap', replicates=1000)
 
@@ -222,11 +321,6 @@ tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fil
 ```{r}
 ```
 
-
 ```{r}
 
 ```
-
-
-
-
