@@ -8,6 +8,7 @@ editor: visual
 library(tidyverse)
 library(sampling)
 library(survey)
+library(knitr)
 ```
 
 
@@ -27,7 +28,7 @@ deff = 1.5
 n0 <- (z_star * sigma / moe)^2
 n1 <- n0 / (1 + (n0 - 1) / N)
 neff <- n1 * deff
-print(neff)
+print(round(neff))
 ```
 
 ## Parte 2
@@ -38,18 +39,16 @@ estratos = df %>% group_by(estrato) %>% summarise(N=n(),
 ```
 
 ```{r}
-estratos = tam %>% mutate(n_prop=round(neff*N/sum(N)),
+estratos = estratos %>% mutate(n_prop=round(neff*N/sum(N)),
                        n_opt=round(neff*N*sd_ing_hog/sum(N*sd_ing_hog)))
-print(estratos)
+estratos %>% kable()
 ```
 
-
+## Parte 3
 
 ```{r}
 set.seed(5)
-
 muestra_final = list()
-
 for(i in 1:nrow(estratos)) {
   estrato_i = estratos$estrato[i]
   n_opt_i = estratos$n_opt[i]
@@ -59,7 +58,7 @@ for(i in 1:nrow(estratos)) {
   UPMs = unique(df_estrato$manzana)
   m = round(n_opt_i / 10)  
   
-  s_upm = cluster(data=df_estrato,
+  s_upm = sampling::cluster(data=df_estrato,
                             clustername='manzana',
                             size=m,
                             method='srswor')
@@ -71,7 +70,7 @@ for(i in 1:nrow(estratos)) {
   for(upm in unique(s_upm_data$manzana)) {
     df_upm = s_upm_data %>% filter(manzana == upm)
     
-    s_usm = strata(data=df_upm,
+    s_usm = sampling::strata(data=df_upm,
                    stratanames='manzana',
                    size=min(10, nrow(df_upm)),  
                    method='srswor')
@@ -89,12 +88,12 @@ for(i in 1:nrow(estratos)) {
   
   muestra_final[[i]] = s_usm_data
 }
-
-muestra_final = bind_rows(muestra_final)
-
+s = bind_rows(muestra_final)
 
 ```
 
+
+## Parte 4
 ```{r}
 s= s %>% mutate(prob_total=prob_upm*prob_usm,
                 w=1/prob_total)
@@ -107,25 +106,127 @@ ps1= s %>% svydesign(strata=~ estrato , ids=~manzana+ID,
                      data=.)
 ```
 
+## Ingreso per cápita
 ```{r}
-res = svymean(~alquila,ps1 )
-confint(res)
-cv(res)
-deff(res)
+res <- svymean(~ingreso_hog, ps1)
+conf_int <- confint(res)
+cv_res <- cv(res)
+
+resultados <- data.frame(
+  Estadística = c("Media del ingreso", "Límite inferior del IC", "Límite superior del IC", "Desvio", "Coeficiente de variación"),
+  Valor = c(coef(res), conf_int[1], conf_int[2], SE(res), cv_res)
+  
+)
+
+resultados %>% kable()
+
+```
+## Hogares pobres
+```{r}
+res = svymean(~pobre, ps1)
+conf_int = confint(res)
+cv_res = cv(res)
+
+resultados = data.frame(
+  Estadística = c("Proporción de hogares pobres", "Límite inferior del IC", "Límite superior del IC", "Desvio" ,"Coeficiente de variación"),
+  Valor = c(coef(res), conf_int[1], conf_int[2],SE(res) ,  cv_res)
+  
+)
+
+resultados %>% kable()
+
+
+```
+
+## Cantidad personas
+
+```{r}
+res = svytotal(~cant_personas ,ps1)
+conf_int = confint(res)
+cv_res = cv(res)
+
+resultados = data.frame(
+  Estadística = c("Total de personas", "Límite inferior del IC", "Límite superior del IC", " Desvio" ,  "Coeficiente de variación"),
+  Valor = c(coef(res), conf_int[1], conf_int[2],SE(res) ,  cv_res)
+  
+)
 ```
 
 
+## Parte 5 
+
+Hay que buscar que es 
+
+
+
+## Parte 6 
 
 ```{r}
-svytotal(~cant_personas ,ps1)
-svymean(~ingreso_hog ,ps1)
+res = svyratio(~ingreso_hog, ~cant_personas, ps1)
+
+conf_int = confint(res)
+cv_res = cv(res)
+
+resultados = data.frame(
+  Estadística = c("Ingreso per cápita", "Límite inferior del IC", "Límite superior del IC", "Desvio" , "Coeficiente de variación"),
+  Valor = c(coef(res), conf_int[1], conf_int[2], SE(res) , cv_res)
+  
+)
+
+resultados %>% kable()
+
+
+```
+## Parte 7 
+
+### Jackknife
+
+```{r}
+```{r}
+jkn=as.svrepdesign(design=ps1,type='JKn')
 ```
 
 
+```{r}
+svyratio(~ingreso_hog, ~cant_personas, jkn)
+```
+
 
 ```{r}
-ingreso_per_capita = svyratio(~ingreso_hog, ~cant_personas, ps1)
-coef(ingreso_per_capita)
+te=svyratio(~ingreso_hog, ~cant_personas, jkn , return.replicates=TRUE)
+
 ```
+
+```{r}
+tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
+```
+
+### Bootstrap
+
+```{r}
+```{r}
+boot=as.svrepdesign(design=ps1, type='subbootstrap', replicates=1000)
+
+svyratio(~ingreso_hog, ~cant_personas, boot)
+```
+
+```{r}
+te=svyratio(~ingreso_hog, ~cant_personas, boot,return.replicates=TRUE)
+
+```
+
+```{r}
+tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
+```
+
+```{r}
+```
+
+
+```{r}
+
+```
+
+
 
 
