@@ -7,6 +7,7 @@ editor: visual
 ```{r}
 library(tidyverse)
 library(sampling)
+library(survey)
 ```
 
 
@@ -29,19 +30,20 @@ neff <- n1 * deff
 print(neff)
 ```
 
-## Parte 2 
+## Parte 2
 
 ```{r}
 estratos = df %>% group_by(estrato) %>% summarise(N=n(),
                                                sd_ing_hog=sd(ingreso_hog))
 ```
 
-
 ```{r}
 estratos = tam %>% mutate(n_prop=round(neff*N/sum(N)),
                        n_opt=round(neff*N*sd_ing_hog/sum(N*sd_ing_hog)))
 print(estratos)
 ```
+
+
 
 ```{r}
 set.seed(5)
@@ -54,9 +56,8 @@ for(i in 1:nrow(estratos)) {
   
   df_estrato = df %>% filter(estrato == estrato_i)
   
-  # Primera etapa: seleccionar UPMs
   UPMs = unique(df_estrato$manzana)
-  m = round(n_opt_i / 10)  # número de UPMs a seleccionar
+  m = round(n_opt_i / 10)  
   
   s_upm = cluster(data=df_estrato,
                             clustername='manzana',
@@ -91,18 +92,40 @@ for(i in 1:nrow(estratos)) {
 
 muestra_final = bind_rows(muestra_final)
 
-print(muestra_final)
-
 
 ```
 
 ```{r}
-s_upm= s_upm %>% arrange(manzana)
-s= strata(data=s_upm,
-                    stratanames = 'manzana',
-                    size=rep(10,m),
-                    method='srswor')
-s = getdata(s_upm,s) %>% 
-  rename(prob_usm=Prob)
+s= s %>% mutate(prob_total=prob_upm*prob_usm,
+                w=1/prob_total)
 ```
+
+```{r}
+ps1= s %>% svydesign(strata=~ estrato , ids=~manzana+ID,
+                     fpc=~prob_upm+prob_usm,
+                     weights=~w,
+                     data=.)
+```
+
+```{r}
+res = svymean(~alquila,ps1 )
+confint(res)
+cv(res)
+deff(res)
+```
+
+
+
+```{r}
+svytotal(~cant_personas ,ps1)
+svymean(~ingreso_hog ,ps1)
+```
+
+
+
+```{r}
+ingreso_per_capita = svyratio(~ingreso_hog, ~cant_personas, ps1)
+coef(ingreso_per_capita)
+```
+
 
