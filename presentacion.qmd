@@ -1,0 +1,121 @@
+---
+title: "Entrega Final - Muestreo I"
+author: "Lucca Frachelle, Cecilia Waksman"
+date: "09-07-24"
+format: revealjs
+editor: visual
+echo: true
+---
+
+```{r}
+#| output: false
+#| echo: false
+library(tidyverse)
+library(sampling)
+library(survey)
+library(knitr)
+df = read_csv("Montevideo GR5.csv")
+```
+
+## Introducción
+
+El objetivo de este trabajo es seleccionar una muestra aleatoria de hogares de Montevideo bajo un diseño estratificado, por conglomerados y en dos etapas de selección. Los estratos son 5 y son definidos a nivel socioeconómico (1 = Bajo, 2 = Medio Bajo, 3 = Medio, 4 = Medio Alto, 5 = Alto). LA UPM es la manzana y la USM es el hogar.
+
+## Introducción
+
+Las UPM son seleccionadas bajo un diseño PPS sin reemplazo utilizando como medida de tamaño la cantidad de personas por UPM. Luego, dentro de cada UPM seleccionada en la primera etapa, se deben seleccionar 5 viviendas dentro de cada UPM con igual probabilidad de selección.
+
+## Introducción
+
+Una vez seleccionada la muestra, se computarán estimaciones puntuales para distintos parámetros (junto con medidas de calidad de las mismas). Las estimaciones para dichos parámetros pueden ser calculadas, ya sea, a nivel de toda la población, como para distintos dominios/áreas de estimación.
+
+## Parte 1
+
+Calcule el tamaño de muestra para obtener un margen de error de $\pm3\%$ a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
+
+Paso 1) $n_0=(\frac{z^*\sigma}{moe})^2 = (\frac{1.96 \times 0.5}{0.03})^2$
+
+Paso 2) $n_1=\frac{n_0}{1+(n_0/N)}$
+
+Paso 3) $n_{deff}=n_1 \times deff$
+
+## Código parte 1
+
+```{r}
+N = nrow(df)
+z_star = 1.96  
+sigma = 0.5
+moe = 0.03
+deff = 1.5
+
+n0 <- ((z_star * sigma) / moe)^2
+n1 <- n0 / (1 + (n0/N))
+neff <- round(n1 * deff)
+print(as.data.frame(neff))
+```
+
+## Parte 2
+
+Con el tamaño de muestra calculado en la parte anterior, asigne el mismo por estrato de forma óptima, utilizando como variable auxiliar el ingreso del hogar.
+
+Tamaño de muestra por estrato según asignación óptima: $n_h = n\times \frac{N_h sd_{U_h}[x]}{\sum_{h=1}^HN_h sd_{U_h}[x]}$, donde, $x\propto y$ aproximadamente, *x* es la variable auxiliar, *y* la variable de interés.
+
+\newpage
+
+## Código parte 2
+
+```{r}
+estratos = df %>% group_by(estrato) %>% summarise(N=n(),
+                                               sd_ing_hog=sd(ingreso_hog))
+```
+
+```{r}
+estratos = estratos %>% mutate(n_opt=round(neff*N*sd_ing_hog/sum(N*sd_ing_hog)))
+estratos %>% kable()
+```
+
+## Parte 3
+
+En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma.
+
+La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzana en la segunda etapa, en este caso 5.
+
+```{r}
+#| output: false
+#| echo: false
+U_upm= df %>% group_by(across(all_of(c("estrato", "manzana")))) %>% summarise(Mi=sum(cant_personas), .groups = "keep", MOS=n())
+```
+
+## Primera etapa
+
+```{r}
+set.seed(5)
+s_upm=sampling::strata(data=U_upm,
+                    stratanames = "estrato",
+                    size=round(estratos$n_opt/5),
+                    method='systematic',
+                    pik=U_upm$Mi,
+                    description=T)
+
+#Selecciono neff/5 manzanas con el diseño PPS sistemático
+s_upm = getdata(U_upm,s_upm) %>% 
+  rename(prob_upm=Prob)
+```
+
+## Segunda etapa
+
+En la segunda etapa, se seleccionan de cada manzana 5 hogares mediante un diseño aleatorio simple sin reposición con probabilidades de inclusión $\frac{n_h}{N_h}$, según el estrato.
+
+```{r}
+U_usm = df %>% left_join(s_upm %>% select(manzana, prob_upm), by="manzana") %>% filter(is.na(prob_upm)==FALSE)
+
+U_usm= U_usm %>% arrange(manzana)
+set.seed(5)
+s= sampling::strata(data=U_usm,
+                    stratanames = 'manzana',
+                    size=rep(5,nrow(U_usm)),
+                    method='srswor')
+#trato cada conglomerado (manzana) como un estrato y saco la muestra de 5  hogares en cada uno
+s = getdata(U_usm,s) %>% 
+  rename(prob_usm=Prob)
+```
