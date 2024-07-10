@@ -277,7 +277,7 @@ Calcular la estimación del error estándar del punto anterior, utilizando dos m
 
 ### Jackknife
 
-Este método de remuestreo se basa en eliminar una observación por réplica, es decir que hay tantas réplicas como observaciones. En el caso del diseño por conglomerados se elimina una UPM, por lo que los ponderadores se reescriben como: $w_{j(i)}= \frac{n_I}{n_I-1}w_j$, donde *j* hace referencia a la UPM e *i* al índice de la réplica respectiva.
+Este método de remuestreo se basa en eliminar una observación por réplica, es decir que hay tantas réplicas como observaciones. En el caso del diseño por conglomerados se elimina una UPM, por lo que los ponderadores se reescriben como: $w_{hj(i)}= \frac{n_h}{n_h-1}w_{hj}$, donde *j* hace referencia a la UPM, *h* al estrato e *i* al índice de la réplica respectiva.
 
 \
 
@@ -287,9 +287,6 @@ Un total en cada réplica se calcula entonces como $\hat{Y}_{(i)}=\sum_{j\in s_{
 
 La varianza de un estimador en este método se calcula como: $V_J(\hat{Y})=\frac{n_I}{n_I-1}\sum_{i=1}^{n_I}(\hat{Y}_{(i)}-\hat{Y})^2$. Aplicando esta fórmula a las enstimaciones del ratio de interés y calculando su raíz cuadrada, obtenemos el error estándar.
 
-\
-
-Como nuestro diseño presenta estratos, se aplica Jackknife dentro de cada estrato.
 
 ```{r}
 pps1 <- svydesign(
@@ -319,13 +316,20 @@ resultados %>%  round(2) %>% kable()
 
 ```
 
+La estimaciones del ingreso per cápita y su error estándar por el método de *Jackknife* es aproximadamente igual a las etimaciones por el método de *estimador de razón*.
 
 
 ```{r}
-tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
+tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()+xlab("Réplicas ingreso per cápita")+ggtitle("Distribución de las réplicas del ingreso per cápita estimado por Jkn")
 ```
 
 ### Bootstrap
+
+Para este diseño, el cual presenta estratos, usaremos la variación del método Bootstrap, Rao-Wu. La misma consiste en extraer, en este caso, 1000 muestras aleatorias simples con reposición (réplicas) de tamaño $m'_h$ de las UPM entre las $m_h$ seleccionadas en la muestra original.
+
+Sea $m^b_{hj}$ la cantidad de veces que aparece la j-ésima UPM es seleccionada en la réplica b, el *factor de multiplicidad*. Entonces el ponderador a utilizar será: $w^b_{khj}=\frac{m_h}{m_h - 1}w_{khj}$.
+
+A partir de esto se calculan para cada réplica los totales pertinentes por el método de Horvitz-Thompson y con ellos el ratio.
 
 ```{r}
 boot=as.svrepdesign(design=ps1, type='subbootstrap', replicates=1000)
@@ -336,10 +340,24 @@ svyratio(~ingreso_hog, ~cant_personas, boot)
 ```{r}
 te=svyratio(~ingreso_hog, ~cant_personas, boot,return.replicates=TRUE)
 
+
+estimacion <- te$ratio
+desvio <- sqrt(te$var)
+
+resultados <- data.frame(
+  Estimación = estimacion[1],
+  Desvío = desvio
+)
+
+resultados %>%  round(2) %>% kable()
+
+
 ```
 
+La estimaciones del ingreso per cápita y su error estándar por el método de *Bootstrap* es aproximadamente igual a las etimaciones por los métodos de *estimador de razón* y *Kackknife*.
+
 ```{r}
-tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
+tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()+xlab("Réplicas ingreso per cápita")+ggtitle("Distribución de las réplicas del ingreso per cápita estimado por Rao-Wu")
 ```
 
 ## Parte 9 
