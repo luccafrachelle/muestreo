@@ -125,7 +125,7 @@ s = getdata(U_usm,s) %>%
 
 ## Parte 4
 
-Calcular la estimación puntual del ingreso promedio, proporción de hogares pobres y total de personas, a nivel de todaa la población. Para cada estimación se debe computar: error estándar (SE), coeficiente de variación, efecto de diseño y márgenes de error al 95%.
+Calcular la estimación puntual del ingreso promedio, proporción de hogares pobres y total de personas, a nivel de toda la población. Para cada estimación se debe computar: error estándar (SE), coeficiente de variación, efecto de diseño y márgenes de error al 95%.
 
 \
 
