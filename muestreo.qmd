@@ -34,7 +34,7 @@ df = read_csv("Montevideo GR5.csv")
 
 ## Parte 1
 
-Calcule el tamaño de muestra para obtener un margen de error de \$\pm\$3% a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
+Calcule el tamaño de muestra para obtener un margen de error de $\pm3\%$ a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
 
 \
 
