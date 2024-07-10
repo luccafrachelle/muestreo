@@ -2,7 +2,7 @@
 title: "Entrega Final - Muestreo I"
 author: "Lucca Frachelle, Cecilia Waksman"
 date: "09-07-24"
-format: revealjs
+format: beamer
 editor: visual
 echo: true
 ---
@@ -25,7 +25,7 @@ El objetivo de este trabajo es seleccionar una muestra aleatoria de hogares de M
 
 Las UPM son seleccionadas bajo un diseño PPS sin reemplazo utilizando como medida de tamaño la cantidad de personas por UPM. Luego, dentro de cada UPM seleccionada en la primera etapa, se deben seleccionar 5 viviendas dentro de cada UPM con igual probabilidad de selección.
 
-## Introducción
+\
 
 Una vez seleccionada la muestra, se computarán estimaciones puntuales para distintos parámetros (junto con medidas de calidad de las mismas). Las estimaciones para dichos parámetros pueden ser calculadas, ya sea, a nivel de toda la población, como para distintos dominios/áreas de estimación.
 
@@ -33,15 +33,17 @@ Una vez seleccionada la muestra, se computarán estimaciones puntuales para dist
 
 Calcule el tamaño de muestra para obtener un margen de error de $\pm3\%$ a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
 
+\
+
 Paso 1) $n_0=(\frac{z^*\sigma}{moe})^2 = (\frac{1.96 \times 0.5}{0.03})^2$
 
 Paso 2) $n_1=\frac{n_0}{1+(n_0/N)}$
 
 Paso 3) $n_{deff}=n_1 \times deff$
 
-## Código parte 1
+\
 
-```{r}
+```{r, echo=FALSE}
 N = nrow(df)
 z_star = 1.96  
 sigma = 0.5
@@ -56,27 +58,27 @@ print(as.data.frame(neff))
 
 ## Parte 2
 
-Con el tamaño de muestra calculado en la parte anterior, asigne el mismo por estrato de forma óptima, utilizando como variable auxiliar el ingreso del hogar.
+Asignar por estrato de forma óptima el tamaño de muestra calculado en la parte anterior, utilizando como variable auxiliar el ingreso del hogar $(x)$.
 
-Tamaño de muestra por estrato según asignación óptima: $n_h = n\times \frac{N_h sd_{U_h}[x]}{\sum_{h=1}^HN_h sd_{U_h}[x]}$, donde, $x\propto y$ aproximadamente, *x* es la variable auxiliar, *y* la variable de interés.
+\
 
-\newpage
+Tamaño de muestra por estrato según asignación óptima: $n_h = n\times \frac{N_h sd_{U_h}[x]}{\sum_{h=1}^HN_h sd_{U_h}[x]}$, donde, $x\propto y$ aproximadamente.
 
-## Código parte 2
-
-```{r}
-estratos = df %>% group_by(estrato) %>% summarise(N=n(),
-                                               sd_ing_hog=sd(ingreso_hog))
-```
+## Parte 2
 
 ```{r}
-estratos = estratos %>% mutate(n_opt=round(neff*N*sd_ing_hog/sum(N*sd_ing_hog)))
+estratos = df %>% group_by(estrato) %>% 
+  summarise(N=n(), sd_ing_hog=sd(ingreso_hog))
+estratos = estratos %>% mutate(n_opt=
+  round(neff*N*sd_ing_hog/sum(N*sd_ing_hog)))
 estratos %>% kable()
 ```
 
 ## Parte 3
 
-En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma.
+En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calculan en función de su cantidad de personas que viven en la misma.
+
+\
 
 La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzana en la segunda etapa, en este caso 5.
 
@@ -107,7 +109,9 @@ s_upm = getdata(U_upm,s_upm) %>%
 En la segunda etapa, se seleccionan de cada manzana 5 hogares mediante un diseño aleatorio simple sin reposición con probabilidades de inclusión $\frac{n_h}{N_h}$, según el estrato.
 
 ```{r}
-U_usm = df %>% left_join(s_upm %>% select(manzana, prob_upm), by="manzana") %>% filter(is.na(prob_upm)==FALSE)
+U_usm = df %>% left_join(s_upm %>% 
+select(manzana, prob_upm), by="manzana") %>% 
+filter(is.na(prob_upm)==FALSE)
 
 U_usm= U_usm %>% arrange(manzana)
 set.seed(5)
@@ -115,7 +119,246 @@ s= sampling::strata(data=U_usm,
                     stratanames = 'manzana',
                     size=rep(5,nrow(U_usm)),
                     method='srswor')
-#trato cada conglomerado (manzana) como un estrato y saco la muestra de 5  hogares en cada uno
 s = getdata(U_usm,s) %>% 
   rename(prob_usm=Prob)
 ```
+
+## Parte 4
+
+Calcular la estimación puntual del ingreso promedio, proporción de hogares pobres y total de personas, a nivel de toda la población. Para cada estimación se debe computar: error estándar (SE), coeficiente de variación, efecto de diseño y márgenes de error al 95%.
+
+\
+
+Estimador Horvitz-Thompson en un diseño estratificado:
+
+-   Total: $\hat{Y}_{HT}=\sum_{h=1}^H\sum_{i\in s}w_{hi}y_{hi}$
+
+-   Promedio: $\hat{\bar{Y}}_{HT}=\frac{1}{N}\hat{Y}_{HT}=\frac{1}{N}\sum_{h=1}^H\sum_{i\in s_h}w_{hi}y_{hi}$
+
+-   Proporsión: $\hat{\bar{Y}}_{HT}$ con *y* una variable booleana.
+
+```{r, warning=FALSE, echo=FALSE}
+s= s %>% mutate(prob_total=prob_upm*prob_usm,
+                w=1/prob_total)
+ps1= s %>% svydesign(strata=~ estrato , ids=~manzana+ID,
+                     fpc=~prob_upm+prob_usm,
+                     weights=~w,
+                     data=.)
+```
+
+## Ingreso Promedio
+
+```{r}
+res <- svymean(~ingreso_hog, ps1, deff = TRUE)
+coef_res <- coef(res)
+conf_int <- confint(res)
+cv_res <- cv(res)
+deff_res <- deff(res)
+```
+
+```{r, echo =FALSE}
+resultados <- data.frame(
+  Estadística = c("Ingreso promedio por hogar", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Efecto de diseño"),
+  Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res)[[1]], cv_res, deff_res), 3)
+)
+resultados %>% kable()
+```
+
+
+## Hogares Pobres
+
+```{r}
+res <- svymean(~pobre, ps1 , deff = TRUE)
+```
+
+```{r, echo=FALSE}
+conf_int <- confint(res)
+cv_res <- cv(res)
+deff_res <- deff(res)
+
+resultados <- data.frame(
+  Estadística = c("Proporción de hogares pobres", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Efecto de diseño"),
+  Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res), cv_res, deff_res), 4)
+)
+resultados %>% kable()
+```
+
+
+## Total de Personas
+
+```{r}
+res <- svytotal(~cant_personas, ps1, deff = TRUE)
+```
+
+```{r, echo=FALSE}
+conf_int <- confint(res)
+cv_res <- cv(res)
+deff_res <- deff(res)
+
+resultados <- data.frame(
+  Estadística = c("Total de personas", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Factor de diseño"),
+  Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res), cv_res, deff_res), 3)
+)
+resultados %>% kable()
+```
+
+
+## Parte 5
+
+La varianza a partir de la cual se calcula el desvío estándar ($SE(\hat{\theta})=\sqrt{V(\hat{\theta})}$) de los parámetros a estimar en la parte anterior se obtiene por el **método del último conglomerado** de la siguiente manera: 
+
+$$\hat{V}_{UC}(\hat{\theta}) = \sum_{h=1}^{H}\frac{1}{m_h(m_h -1)}\sum_{j\in s_h}(\hat{\theta}^*_j m_{h} - \hat{\theta}_h)^2$$
+
+donde $\hat{\theta}^*_j$ es la estimación del parámetro en la j-ésima UPM (manzana), $\hat{\theta}_h$ la estimación del parámetro para el h-ésimo estrato y $m_h$ la cantidad de UPMs del mismo estrato.
+
+## Parte 6
+
+Calcular el ingreso per cápita en Montevideo (junto con su error estándar). Indique el tipo de parámetro y qué método fue utilizado por defecto por el paquete survey para la estimación del error estándar. Tenga en cuenta que el ingreso per cápita se calcula como: $\frac{ingrsos \ totales \ en \ Montevideo}{Cantidad \ de \ habitantes}$.
+
+\
+
+Esta estimación es un ratio, por tanto se calcula como la razón entre dos totales, es decir $R=\frac{Y}{Z}$, y se estima como $\hat{R}=\frac{\hat{Y}_{HT}}{\hat{Z}_{HT}}$.
+
+## Parte 6
+
+```{r}
+res <- svyratio(~ingreso_hog, ~cant_personas, 
+                ps1, deff = TRUE)
+```
+
+```{r, echo=FALSE}
+conf_int <- confint(res)
+cv_res <- cv(res)
+se_res <- SE(res)
+resultados <- data.frame(
+  Estadística = c("Ingreso per cápita", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación"),
+  Valor = round(c(coef(res), conf_int[1], conf_int[2], se_res, cv_res), 4)
+)
+resultados %>% kable()
+```
+
+## Parte 6
+
+Para este tipo de estimador, la varianza se calcula mediante el método de **estimador de razón** que aproxima pa varianza por linealización de Taylor. Entonces la varianza aproximada se calcula como:
+
+$$AV(\hat{R})=V(\hat{R})=\frac{1}{Z^2}\sum_{i\in U}\sum_{i\in U}\triangle_{ij}\frac{y_i - Rz_i}{\pi_i}\frac{y_i - Rz_j}{\pi_j}$$
+
+Y su estimación es: $\hat{V}(\hat{R})=\frac{1}{\hat{Z}_{HT}^2}\sum_{i\in s}\sum_{i\in s}\frac{\triangle_{ij}}{\pi_{ij}}\frac{y_i - \hat{R}z_i}{\pi_i}\frac{y_i - \hat{R}z_j}{\pi_j}$
+
+Por último, el error estándar será $SE(\hat{\theta})=\sqrt{V(\hat{\theta})}$.
+
+## Parte 7: Jackknife
+
+Este método de remuestreo se basa en eliminar una observación (UPM para conlomerados) por réplica. Hay entonces tantas réplicas como observaciones. 
+
+- Cálculo de nuevos ponderadores: $w_{hj(i)}= \frac{n_h}{n_h-1}w_{hj}$, donde *j* hace referencia a la UPM, *h* al estrato e *i* al índice de la réplica respectiva.
+
+- Cálculo de un total: $\hat{Y}_{(i)}=\sum_{j\in s_{(i)}}w_{j(i)}y_j$.
+
+- Cálculo de un ratio: $\hat{R}_{(i)}=\frac{\hat{Y}_{(i)}}{\hat{Z}_{(i)}}$.
+
+- Cálculo de varianza: $V_J(\hat{Y})=\frac{n_I}{n_I-1}\sum_{i=1}^{n_I}(\hat{Y}_{(i)}-\hat{Y})^2$.
+
+## Parte 7: Jackknife
+
+```{r}
+pps1 <- svydesign(
+  strata = ~estrato,
+  ids = ~manzana + ID,
+  probs  = ~prob_upm + prob_usm ,
+  data = s)
+jkn <- as.svrepdesign(design = pps1, type = "JKn")
+
+te=svyratio(~ingreso_hog, ~cant_personas, 
+            jkn , return.replicates=TRUE)
+estimacion <- te$ratio
+desvio <- sqrt(te$var)
+```
+
+```{r, echo=FALSE}
+resultados <- data.frame(
+  Estimación = estimacion[1],
+  Desvío = desvio)
+resultados %>%  round(2) %>% kable()
+```
+
+## Parte 7: Bootstrap
+
+Para este diseño, el cual presenta estratos, usaremos la variación del método Bootstrap, Rao-Wu.
+
+Se extraen 1000 muestras aleatorias simples con reposición (réplicas) de tamaño $m'_h$ de las UPM entre las $m_h$ seleccionadas en la muestra original.
+
+Sea $m^b_{hj}$ la cantidad de veces que aparece la j-ésima UPM es seleccionada en la réplica b, el *factor de multiplicidad*. Entonces el ponderador a utilizar será: $w^b_{khj}=\frac{m_h}{m_h - 1}w_{khj}$.
+
+A partir de esto se calculan para cada réplica los totales pertinentes por el método de Horvitz-Thompson y con ellos el ratio.
+
+## Parte 7: Bootstrap
+
+```{r}
+#|output=FALSE
+boot=as.svrepdesign(design=ps1, type='subbootstrap', 
+                    replicates=1000)
+
+te=svyratio(~ingreso_hog, ~cant_personas, 
+            boot,return.replicates=TRUE)
+estimacionb <- te$ratio
+desviob <- sqrt(te$var)
+```
+
+```{r, echo=FALSE}
+resultados <- data.frame(
+  Método = c("Estimador de razón", "Jackknife", "Bootstrap"),
+  Estimación = round(c(coef(res), estimacion[1], estimacionb[1]),2),
+  Desvío = round(c(se_res, desvio, desviob), 2))
+resultados %>% kable()
+```
+
+
+## Parte 8
+
+```{r, echo=FALSE}
+#| fig-height: 4
+
+tibble(est= te$replicates) %>% ggplot()+ 
+  geom_histogram(aes(x=est), bins=20, fill='purple', 
+                 color='white')+theme_light()+ 
+  xlab("Réplicas ingreso per cápita")+ 
+  ggtitle("Distribución empírica ingreso per cápita estimado, Rao-Wu")
+```
+
+Según el método de Bootstrap, las estimaciónes en las réplicas de la variable, ingreso per cápita, tienden a concentrarse en valores en torno a 1700, con una distribución aproximadamente simétrica.
+
+## Parte 9
+
+Estimación de la cantidad de personas pobres y no pobres, junto con sus márgenes de error, utilizando el Bootstrap realizado en los puntos anteriores.
+
+```{r}
+res_no <- svytotal(~(pobre==0), boot)
+coef_no <- coef(res_no)
+conf_int_no <- confint(res_no)
+se_no <- SE(res_no)
+```
+
+```{r, echo=FALSE}
+# Crear un data frame para los resultados
+resultados_pobre <- data.frame(
+  Estado = c("Personas pobres", "Personas no pobres"),
+  Estimación = round(coef(res_no), 0),
+  `LI IC` = round(conf_int_no[, 1], 0),
+  `LS IC` = round(conf_int_no[, 2], 0),
+  `SE` = round(se_no, 0))
+rownames(resultados_pobre) <- NULL
+resultados_pobre %>% kable()
+```
+
+## Parte 9
+
+Los dominios de estimación, en este caso son no planeados, ya que la distinción entre pobre y no pobre (dominios) no es tenida en cuenta en el diseño.
+
+Si se quisieran mejorar dichas estimaciones se podría:
+
+- estratificar también según si son o no pobres, o en el caso de hacer conglomerados por manzanas, si la proporción de pobres en dicha manzana pasa o no cierto umbral; 
+
+- asignar el tamaño de muestra por estratos según una variable que se encuentre más relacionada con la variable de pobreza; 
+
+- usar un tamaño de muestra mayor.

@@ -115,6 +115,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>El objetivo de este trabajo es seleccionar una muestra aleatoria de hogares de Montevideo bajo un diseño estratificado, por conglomerados y en dos etapas de selección. Los estratos son 5 y son definidos a nivel socioeconómico (1 = Bajo, 2 = Medio Bajo, 3 = Medio, 4 = Medio Alto, 5 = Alto). LA UPM es la manzana y la USM es el hogar.</p>
 <p>Las UPM son seleccionadas bajo un diseño PPS sin reemplazo utilizando como medida de tamaño la cantidad de personas por UPM. Luego, dentro de cada UPM seleccionada en la primera etapa, se deben seleccionar 5 viviendas dentro de cada UPM con igual probabilidad de selección.</p>
 <p>Una vez seleccionada la muestra, se computarán estimaciones puntuales para distintos parámetros (junto con medidas de calidad de las mismas). Las estimaciones para dichos parámetros pueden ser calculadas, ya sea, a nivel de toda la población, como para distintos dominios/áreas de estimación.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sampling)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survey)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>df <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"Montevideo GR5.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div style="page-break-after: always;"></div>
 </section>
 <section id="parte-1" class="level2">
@@ -129,16 +136,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </p>
 <p>El tamaño de muestra será entonces:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>N <span class="ot">=</span> <span class="fu">nrow</span>(df)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>z_star <span class="ot">=</span> <span class="fl">1.96</span>  </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">=</span> <span class="fl">0.5</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>moe <span class="ot">=</span> <span class="fl">0.03</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>deff <span class="ot">=</span> <span class="fl">1.5</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>n0 <span class="ot">&lt;-</span> ((z_star <span class="sc">*</span> sigma) <span class="sc">/</span> moe)<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>n1 <span class="ot">&lt;-</span> n0 <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> (n0<span class="sc">/</span>N))</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>neff <span class="ot">&lt;-</span> <span class="fu">round</span>(n1 <span class="sc">*</span> deff)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.data.frame</span>(neff))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>N <span class="ot">=</span> <span class="fu">nrow</span>(df)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>z_star <span class="ot">=</span> <span class="fl">1.96</span>  </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">=</span> <span class="fl">0.5</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>moe <span class="ot">=</span> <span class="fl">0.03</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>deff <span class="ot">=</span> <span class="fl">1.5</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>n0 <span class="ot">&lt;-</span> ((z_star <span class="sc">*</span> sigma) <span class="sc">/</span> moe)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>n1 <span class="ot">&lt;-</span> n0 <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> (n0<span class="sc">/</span>N))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>neff <span class="ot">&lt;-</span> <span class="fu">round</span>(n1 <span class="sc">*</span> deff)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.data.frame</span>(neff))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  neff
 1 1597</code></pre>
@@ -154,12 +161,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><br>
 </p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>estratos <span class="ot">=</span> df <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(estrato) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">N=</span><span class="fu">n</span>(),</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">sd_ing_hog=</span><span class="fu">sd</span>(ingreso_hog))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>estratos <span class="ot">=</span> df <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(estrato) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">N=</span><span class="fu">n</span>(),</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">sd_ing_hog=</span><span class="fu">sd</span>(ingreso_hog))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>estratos <span class="ot">=</span> estratos <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">n_opt=</span><span class="fu">round</span>(neff<span class="sc">*</span>N<span class="sc">*</span>sd_ing_hog<span class="sc">/</span><span class="fu">sum</span>(N<span class="sc">*</span>sd_ing_hog)))</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>estratos <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>estratos <span class="ot">=</span> estratos <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">n_opt=</span><span class="fu">round</span>(neff<span class="sc">*</span>N<span class="sc">*</span>sd_ing_hog<span class="sc">/</span><span class="fu">sum</span>(N<span class="sc">*</span>sd_ing_hog)))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>estratos <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -210,20 +217,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="parte-3" class="level2">
 <h2 class="anchored" data-anchor-id="parte-3">Parte 3</h2>
-<p>En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es <span class="math inline">\(\pi ps\)</span> <em>sistemático</em> y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma.</p>
+<p>En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es <span class="math inline">\(\pi ps\)</span> <em>sistemático</em> y las probabilidades de inclusión de cada manzana se calculan en función de su cantidad de personas que viven en la misma.</p>
 <p>La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzana en la segunda etapa, en este caso 5.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>U_upm<span class="ot">=</span> df <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"estrato"</span>, <span class="st">"manzana"</span>)))) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">Mi=</span><span class="fu">sum</span>(cant_personas), <span class="at">.groups =</span> <span class="st">"keep"</span>, <span class="at">MOS=</span><span class="fu">n</span>())<span class="co">#cantidad de personas por manzana, cantidad de hogares por manzana</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>U_upm<span class="ot">=</span> df <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"estrato"</span>, <span class="st">"manzana"</span>)))) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">Mi=</span><span class="fu">sum</span>(cant_personas), <span class="at">.groups =</span> <span class="st">"keep"</span>, <span class="at">MOS=</span><span class="fu">n</span>())<span class="co">#cantidad de personas por manzana, cantidad de hogares por manzana</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># primera etapa</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>s_upm<span class="ot">=</span>sampling<span class="sc">::</span><span class="fu">strata</span>(<span class="at">data=</span>U_upm,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stratanames =</span> <span class="st">"estrato"</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">size=</span><span class="fu">round</span>(estratos<span class="sc">$</span>n_opt<span class="sc">/</span><span class="dv">5</span>),</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">method=</span><span class="st">'systematic'</span>,</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">pik=</span>U_upm<span class="sc">$</span>Mi,</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">description=</span>T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># primera etapa</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>s_upm<span class="ot">=</span>sampling<span class="sc">::</span><span class="fu">strata</span>(<span class="at">data=</span>U_upm,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stratanames =</span> <span class="st">"estrato"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">size=</span><span class="fu">round</span>(estratos<span class="sc">$</span>n_opt<span class="sc">/</span><span class="dv">5</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">method=</span><span class="st">'systematic'</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">pik=</span>U_upm<span class="sc">$</span>Mi,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">description=</span>T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Stratum 1 
 
@@ -243,24 +250,24 @@ Population total and number of selected units: 410 80
 Number of strata  5 
 Total number of selected units 320 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Selecciono neff/5 manzanas con el diseño PPS sistemático</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>s_upm <span class="ot">=</span> <span class="fu">getdata</span>(U_upm,s_upm) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">prob_upm=</span>Prob)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Selecciono neff/5 manzanas con el diseño PPS sistemático</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>s_upm <span class="ot">=</span> <span class="fu">getdata</span>(U_upm,s_upm) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">prob_upm=</span>Prob)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>En la segunda etapa, se seleccionan de cada manzana 5 hogares mediante un diseño aleatorio simple sin reposición con probabilidades de inclusión <span class="math inline">\(\frac{n_h}{N_h}\)</span>, según el estrato.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#segunda etapa</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>U_usm <span class="ot">=</span> df <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(s_upm <span class="sc">%&gt;%</span> <span class="fu">select</span>(manzana, prob_upm), <span class="at">by=</span><span class="st">"manzana"</span>) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">is.na</span>(prob_upm)<span class="sc">==</span><span class="cn">FALSE</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>U_usm<span class="ot">=</span> U_usm <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(manzana)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>s<span class="ot">=</span> sampling<span class="sc">::</span><span class="fu">strata</span>(<span class="at">data=</span>U_usm,</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stratanames =</span> <span class="st">'manzana'</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">size=</span><span class="fu">rep</span>(<span class="dv">5</span>,<span class="fu">nrow</span>(U_usm)),</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">method=</span><span class="st">'srswor'</span>)</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#trato cada conglomerado (manzana) como un estrato y saco la muestra de 5  hogares en cada uno</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>s <span class="ot">=</span> <span class="fu">getdata</span>(U_usm,s) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">prob_usm=</span>Prob)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">#segunda etapa</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>U_usm <span class="ot">=</span> df <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(s_upm <span class="sc">%&gt;%</span> <span class="fu">select</span>(manzana, prob_upm), <span class="at">by=</span><span class="st">"manzana"</span>) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">is.na</span>(prob_upm)<span class="sc">==</span><span class="cn">FALSE</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>U_usm<span class="ot">=</span> U_usm <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(manzana)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>s<span class="ot">=</span> sampling<span class="sc">::</span><span class="fu">strata</span>(<span class="at">data=</span>U_usm,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stratanames =</span> <span class="st">'manzana'</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">size=</span><span class="fu">rep</span>(<span class="dv">5</span>,<span class="fu">nrow</span>(U_usm)),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">method=</span><span class="st">'srswor'</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#trato cada conglomerado (manzana) como un estrato y saco la muestra de 5  hogares en cada uno</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>s <span class="ot">=</span> <span class="fu">getdata</span>(U_usm,s) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">prob_usm=</span>Prob)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><br>
 </p>
@@ -277,28 +284,28 @@ Total number of selected units 320 </code></pre>
 <p><br>
 </p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>s<span class="ot">=</span> s <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">prob_total=</span>prob_upm<span class="sc">*</span>prob_usm,</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">w=</span><span class="dv">1</span><span class="sc">/</span>prob_total)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>s<span class="ot">=</span> s <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">prob_total=</span>prob_upm<span class="sc">*</span>prob_usm,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">w=</span><span class="dv">1</span><span class="sc">/</span>prob_total)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ps1<span class="ot">=</span> s <span class="sc">%&gt;%</span> <span class="fu">svydesign</span>(<span class="at">strata=</span><span class="sc">~</span> estrato , <span class="at">ids=</span><span class="sc">~</span>manzana<span class="sc">+</span>ID,</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">fpc=</span><span class="sc">~</span>prob_upm<span class="sc">+</span>prob_usm,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">weights=</span><span class="sc">~</span>w,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data=</span>.)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ps1<span class="ot">=</span> s <span class="sc">%&gt;%</span> <span class="fu">svydesign</span>(<span class="at">strata=</span><span class="sc">~</span> estrato , <span class="at">ids=</span><span class="sc">~</span>manzana<span class="sc">+</span>ID,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">fpc=</span><span class="sc">~</span>prob_upm<span class="sc">+</span>prob_usm,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">weights=</span><span class="sc">~</span>w,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data=</span>.)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>Ingreso Promedio</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svymean</span>(<span class="sc">~</span>ingreso_hog, ps1, <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>deff_res <span class="ot">&lt;-</span> <span class="fu">deff</span>(res)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Ingreso promedio por hogar"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>, <span class="st">"Efecto de diseño"</span>),</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], <span class="fu">SE</span>(res)[[<span class="dv">1</span>]], cv_res, deff_res), <span class="dv">3</span>)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svymean</span>(<span class="sc">~</span>ingreso_hog, ps1, <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>deff_res <span class="ot">&lt;-</span> <span class="fu">deff</span>(res)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Ingreso promedio por hogar"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>, <span class="st">"Efecto de diseño"</span>),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], <span class="fu">SE</span>(res)[[<span class="dv">1</span>]], cv_res, deff_res), <span class="dv">3</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -343,17 +350,17 @@ Total number of selected units 320 </code></pre>
 </p>
 <p><strong>Hogares Pobres</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svymean</span>(<span class="sc">~</span>pobre, ps1 , <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>deff_res <span class="ot">&lt;-</span> <span class="fu">deff</span>(res)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Proporción de hogares pobres"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>, <span class="st">"Efecto de diseño"</span>),</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], <span class="fu">SE</span>(res), cv_res, deff_res), <span class="dv">4</span>)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svymean</span>(<span class="sc">~</span>pobre, ps1 , <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>deff_res <span class="ot">&lt;-</span> <span class="fu">deff</span>(res)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Proporción de hogares pobres"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>, <span class="st">"Efecto de diseño"</span>),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], <span class="fu">SE</span>(res), cv_res, deff_res), <span class="dv">4</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -398,17 +405,17 @@ Total number of selected units 320 </code></pre>
 </p>
 <p><strong>Total de Personas</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svytotal</span>(<span class="sc">~</span>cant_personas, ps1, <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>deff_res <span class="ot">&lt;-</span> <span class="fu">deff</span>(res)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Total de personas"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>, <span class="st">"Factor de diseño"</span>),</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], <span class="fu">SE</span>(res), cv_res, deff_res), <span class="dv">3</span>)</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svytotal</span>(<span class="sc">~</span>cant_personas, ps1, <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>deff_res <span class="ot">&lt;-</span> <span class="fu">deff</span>(res)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Total de personas"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>, <span class="st">"Factor de diseño"</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], <span class="fu">SE</span>(res), cv_res, deff_res), <span class="dv">3</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -465,18 +472,18 @@ Total number of selected units 320 </code></pre>
 <p>Calcular el ingreso per cápita en Montevideo (junto con su error estándar). Indique el tipo de parámetro y qué método fue utilizado por defecto por el paquete survey para la estimación del error estándar. Tenga en cuenta que el ingreso per cápita se calcula como: <span class="math inline">\(\frac{ingrsos \ totales \ en \ Montevideo}{Cantidad \ de \ habitantes}\)</span>.</p>
 <p>Esta estimación es un ratio, por tanto se calcula como la razón entre dos totales, es decir <span class="math inline">\(R=\frac{Y}{Z}\)</span>, y se estima como <span class="math inline">\(\hat{R}=\frac{\hat{Y}_{HT}}{\hat{Z}_{HT}}\)</span>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svyratio</span>(<span class="sc">~</span>ingreso_hog, <span class="sc">~</span>cant_personas, ps1, <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>se_res <span class="ot">&lt;-</span> <span class="fu">SE</span>(res)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Ingreso per cápita"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>),</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], se_res, cv_res), <span class="dv">4</span>)</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">svyratio</span>(<span class="sc">~</span>ingreso_hog, <span class="sc">~</span>cant_personas, ps1, <span class="at">deff =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>conf_int <span class="ot">&lt;-</span> <span class="fu">confint</span>(res)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">cv</span>(res)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>se_res <span class="ot">&lt;-</span> <span class="fu">SE</span>(res)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  Estadística <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Ingreso per cápita"</span>, <span class="st">"Límite inferior del IC"</span>, <span class="st">"Límite superior del IC"</span>, <span class="st">"Desvío"</span>, <span class="st">"Coeficiente de variación"</span>),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Valor =</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">coef</span>(res), conf_int[<span class="dv">1</span>], conf_int[<span class="dv">2</span>], se_res, cv_res), <span class="dv">4</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -521,32 +528,33 @@ Total number of selected units 320 </code></pre>
 <section id="parte-7-y-8" class="level2">
 <h2 class="anchored" data-anchor-id="parte-7-y-8">Parte 7 y 8</h2>
 <p>Calcular la estimación del error estándar del punto anterior, utilizando dos métodos de remuestreo: Jackknife y Bootstrap (con 1000 réplicas). Compare los resultados obtenidos.</p>
+<p>Realizar una visualización de la distribución empírica del estimador utilizando Bootstrap. Interprete los resuultados.</p>
 <p><strong>Jackknife</strong></p>
 <p>Este método de remuestreo se basa en eliminar una observación por réplica, es decir que hay tantas réplicas como observaciones. En el caso del diseño por conglomerados se elimina una UPM, por lo que los ponderadores se reescriben como: <span class="math inline">\(w_{hj(i)}= \frac{n_h}{n_h-1}w_{hj}\)</span>, donde <em>j</em> hace referencia a la UPM, <em>h</em> al estrato e <em>i</em> al índice de la réplica respectiva.</p>
 <p>Un total en cada réplica se calcula entonces como <span class="math inline">\(\hat{Y}_{(i)}=\sum_{j\in s_{(i)}}w_{j(i)}y_j\)</span>. Y el ratio respectivo es <span class="math inline">\(\hat{R}_{(i)}=\frac{\hat{Y}_{(i)}}{\hat{Z}_{(i)}}\)</span>.</p>
 <p>La varianza de un estimador en este método se calcula como: <span class="math inline">\(V_J(\hat{Y})=\frac{n_I}{n_I-1}\sum_{i=1}^{n_I}(\hat{Y}_{(i)}-\hat{Y})^2\)</span>. Aplicando esta fórmula a las enstimaciones del ratio de interés y calculando su raíz cuadrada, obtenemos el error estándar.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>pps1 <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">strata =</span> <span class="sc">~</span>estrato,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ids =</span> <span class="sc">~</span>manzana <span class="sc">+</span> ID,</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs  =</span> <span class="sc">~</span>prob_upm <span class="sc">+</span> prob_usm ,</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> s  </span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>jkn <span class="ot">&lt;-</span> <span class="fu">as.svrepdesign</span>(<span class="at">design =</span> pps1, <span class="at">type =</span> <span class="st">"JKn"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>pps1 <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">strata =</span> <span class="sc">~</span>estrato,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ids =</span> <span class="sc">~</span>manzana <span class="sc">+</span> ID,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs  =</span> <span class="sc">~</span>prob_upm <span class="sc">+</span> prob_usm ,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> s  </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>jkn <span class="ot">&lt;-</span> <span class="fu">as.svrepdesign</span>(<span class="at">design =</span> pps1, <span class="at">type =</span> <span class="st">"JKn"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>te<span class="ot">=</span><span class="fu">svyratio</span>(<span class="sc">~</span>ingreso_hog, <span class="sc">~</span>cant_personas, jkn , <span class="at">return.replicates=</span><span class="cn">TRUE</span>)</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>estimacion <span class="ot">&lt;-</span> te<span class="sc">$</span>ratio</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>desvio <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(te<span class="sc">$</span>var)</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  Estimación <span class="ot">=</span> estimacion[<span class="dv">1</span>],</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  Desvío <span class="ot">=</span> desvio</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span>  <span class="fu">round</span>(<span class="dv">2</span>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>te<span class="ot">=</span><span class="fu">svyratio</span>(<span class="sc">~</span>ingreso_hog, <span class="sc">~</span>cant_personas, jkn , <span class="at">return.replicates=</span><span class="cn">TRUE</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>estimacion <span class="ot">&lt;-</span> te<span class="sc">$</span>ratio</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>desvio <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(te<span class="sc">$</span>var)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  Estimación <span class="ot">=</span> estimacion[<span class="dv">1</span>],</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  Desvío <span class="ot">=</span> desvio</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span>  <span class="fu">round</span>(<span class="dv">2</span>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -568,7 +576,7 @@ Total number of selected units 320 </code></pre>
 <p><br>
 </p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">est=</span> te<span class="sc">$</span>replicates) <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>()<span class="sc">+</span> <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x=</span>est), <span class="at">bins=</span><span class="dv">20</span>, <span class="at">fill=</span><span class="st">'purple'</span>, <span class="at">color=</span><span class="st">'white'</span>)<span class="sc">+</span><span class="fu">theme_light</span>()<span class="sc">+</span><span class="fu">xlab</span>(<span class="st">"Réplicas ingreso per cápita"</span>)<span class="sc">+</span><span class="fu">ggtitle</span>(<span class="st">"Distribución de las réplicas del ingreso per cápita estimado por Jkn"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">est=</span> te<span class="sc">$</span>replicates) <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>()<span class="sc">+</span> <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x=</span>est), <span class="at">bins=</span><span class="dv">20</span>, <span class="at">fill=</span><span class="st">'purple'</span>, <span class="at">color=</span><span class="st">'white'</span>)<span class="sc">+</span><span class="fu">theme_light</span>()<span class="sc">+</span><span class="fu">xlab</span>(<span class="st">"Réplicas ingreso per cápita"</span>)<span class="sc">+</span><span class="fu">ggtitle</span>(<span class="st">"Distribución empírica ingreso per cápita estimado, Jkn"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="muestreo_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -581,22 +589,22 @@ Total number of selected units 320 </code></pre>
 <p>Sea <span class="math inline">\(m^b_{hj}\)</span> la cantidad de veces que aparece la j-ésima UPM es seleccionada en la réplica b, el <em>factor de multiplicidad</em>. Entonces el ponderador a utilizar será: <span class="math inline">\(w^b_{khj}=\frac{m_h}{m_h - 1}w_{khj}\)</span>.</p>
 <p>A partir de esto se calculan para cada réplica los totales pertinentes por el método de Horvitz-Thompson y con ellos el ratio.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">#|output=FALSE</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>boot<span class="ot">=</span><span class="fu">as.svrepdesign</span>(<span class="at">design=</span>ps1, <span class="at">type=</span><span class="st">'subbootstrap'</span>, <span class="at">replicates=</span><span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#|output=FALSE</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>boot<span class="ot">=</span><span class="fu">as.svrepdesign</span>(<span class="at">design=</span>ps1, <span class="at">type=</span><span class="st">'subbootstrap'</span>, <span class="at">replicates=</span><span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>te<span class="ot">=</span><span class="fu">svyratio</span>(<span class="sc">~</span>ingreso_hog, <span class="sc">~</span>cant_personas, boot,<span class="at">return.replicates=</span><span class="cn">TRUE</span>)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>estimacion <span class="ot">&lt;-</span> te<span class="sc">$</span>ratio</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>desvio <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(te<span class="sc">$</span>var)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  Estimación <span class="ot">=</span> estimacion[<span class="dv">1</span>],</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  Desvío <span class="ot">=</span> desvio</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span>  <span class="fu">round</span>(<span class="dv">2</span>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>te<span class="ot">=</span><span class="fu">svyratio</span>(<span class="sc">~</span>ingreso_hog, <span class="sc">~</span>cant_personas, boot,<span class="at">return.replicates=</span><span class="cn">TRUE</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>estimacion <span class="ot">&lt;-</span> te<span class="sc">$</span>ratio</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>desvio <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(te<span class="sc">$</span>var)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>resultados <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  Estimación <span class="ot">=</span> estimacion[<span class="dv">1</span>],</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  Desvío <span class="ot">=</span> desvio</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>resultados <span class="sc">%&gt;%</span>  <span class="fu">round</span>(<span class="dv">2</span>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
@@ -618,7 +626,7 @@ Total number of selected units 320 </code></pre>
 <p><br>
 </p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">est=</span> te<span class="sc">$</span>replicates) <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>()<span class="sc">+</span> <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x=</span>est), <span class="at">bins=</span><span class="dv">20</span>, <span class="at">fill=</span><span class="st">'purple'</span>, <span class="at">color=</span><span class="st">'white'</span>)<span class="sc">+</span><span class="fu">theme_light</span>()<span class="sc">+</span><span class="fu">xlab</span>(<span class="st">"Réplicas ingreso per cápita"</span>)<span class="sc">+</span><span class="fu">ggtitle</span>(<span class="st">"Distribución de las réplicas del ingreso per cápita estimado por Rao-Wu"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">est=</span> te<span class="sc">$</span>replicates) <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>()<span class="sc">+</span> <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x=</span>est), <span class="at">bins=</span><span class="dv">20</span>, <span class="at">fill=</span><span class="st">'purple'</span>, <span class="at">color=</span><span class="st">'white'</span>)<span class="sc">+</span><span class="fu">theme_light</span>()<span class="sc">+</span><span class="fu">xlab</span>(<span class="st">"Réplicas ingreso per cápita"</span>)<span class="sc">+</span><span class="fu">ggtitle</span>(<span class="st">"Distribución empírica ingreso per cápita estimado, Rao-Wu"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="muestreo_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -631,23 +639,23 @@ Total number of selected units 320 </code></pre>
 <h2 class="anchored" data-anchor-id="parte-9">Parte 9</h2>
 <p>Estimar la cantidad de personas pobres y no pobres (junto con sus márgenes de error). Indicar si los dominios de estimación son planeados o no planeados. Para este caso, utilices el Bootstrap realizado en los puntos anteriores. Comente los resultados obtenidos y proponga estrategias para mejorar la precisión de las estimación obtenida.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># res_pobre &lt;- svytotal(~pobre, boot)</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># conf_int_pobre &lt;- confint(res_pobre)</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># se_pobre &lt;- SE(res_pobre)</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>res_no <span class="ot">&lt;-</span> <span class="fu">svytotal</span>(<span class="sc">~</span>(pobre<span class="sc">==</span><span class="dv">0</span>), boot)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>conf_int_no <span class="ot">&lt;-</span> <span class="fu">confint</span>(res_no)</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>se_no <span class="ot">&lt;-</span> <span class="fu">SE</span>(res_no)</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Crear un data frame para los resultados</span></span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>resultados_pobre <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Estado =</span> <span class="fu">c</span>(<span class="st">"Personas pobres"</span>, <span class="st">"Personas no pobres"</span>),</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  Estimación <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">coef</span>(res_no), <span class="dv">0</span>),</span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Límite inferior IC</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(conf_int_no[, <span class="dv">1</span>], <span class="dv">0</span>),</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Límite superior IC</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(conf_int_no[, <span class="dv">2</span>], <span class="dv">0</span>),</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Error estándar</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(se_no, <span class="dv">0</span>))</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(resultados_pobre) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>resultados_pobre <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># res_pobre &lt;- svytotal(~pobre, boot)</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># conf_int_pobre &lt;- confint(res_pobre)</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># se_pobre &lt;- SE(res_pobre)</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>res_no <span class="ot">&lt;-</span> <span class="fu">svytotal</span>(<span class="sc">~</span>(pobre<span class="sc">==</span><span class="dv">0</span>), boot)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>conf_int_no <span class="ot">&lt;-</span> <span class="fu">confint</span>(res_no)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>se_no <span class="ot">&lt;-</span> <span class="fu">SE</span>(res_no)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Crear un data frame para los resultados</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>resultados_pobre <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Estado =</span> <span class="fu">c</span>(<span class="st">"Personas pobres"</span>, <span class="st">"Personas no pobres"</span>),</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  Estimación <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">coef</span>(res_no), <span class="dv">0</span>),</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Límite inferior IC</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(conf_int_no[, <span class="dv">1</span>], <span class="dv">0</span>),</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Límite superior IC</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(conf_int_no[, <span class="dv">2</span>], <span class="dv">0</span>),</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Error estándar</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(se_no, <span class="dv">0</span>))</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(resultados_pobre) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>resultados_pobre <span class="sc">%&gt;%</span> <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <colgroup>
@@ -685,9 +693,12 @@ Total number of selected units 320 </code></pre>
 </table>
 </div>
 </div>
+</section>
+<section id="parte-9-1" class="level2">
+<h2 class="anchored" data-anchor-id="parte-9-1">Parte 9</h2>
 <p>Se estima que en la población hay <span class="math inline">\(33444\pm 8533\)</span> personas pobres contra <span class="math inline">\(419070 \pm 16123\)</span> no pobres (siendo el intervalo de confianza al 95%), con errores estándar estimados de 4354 y 8227, respectivamente. La precisión de la estimación del total de no pobres es relativamente alta, pero la de pobres presenta una dispersión grande en comparación con su valor estimado.</p>
-<p>Los dominios de estimación en este caso son no planeados, ya que como no se conoce a priori el factor de multiplicidad de las UPMs, tampoco se puede conocer ni controlar el tamaño de muestra, algunas UPMs de la muestra original podrían no estar en las réplicas y otras estarán repetidas.</p>
-<p>Si se quisieran mejorar dichas estimaciones se podría estratificar también según si son o no pobres, o en el caso de hacer conglomerados por manzanas, si la proporción de pobres en dicha manzana pasa o no cierto umbral; asignar el tamaño de muestra por estratos según una variable que se encuentre más relacionada con la variable de pobreza; usar un tamaño de muestra mayor; como alguos ejemplos.</p>
+<p>Los dominios de estimación, es decir los subconjuntos de la población que distinguen entre pobre y no pobre, en este caso son no planeados, ya que los musmos no son tenidos en cuenta en el diseño muestral.</p>
+<p>Si se quisieran mejorar dichas estimaciones se podría estratificar también según si son o no pobres (dominios serían entonces planeados), o en el caso de hacer conglomerados por manzanas, si la proporción de pobres en dicha manzana pasa o no cierto umbral; asignar el tamaño de muestra por estratos según una variable que se encuentre más relacionada con la variable de pobreza; usar un tamaño de muestra mayor; como alguos ejemplos.</p>
 </section>
 
 </main>

@@ -83,7 +83,7 @@ estratos %>% kable()
 
 ## Parte 3
 
-En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma.
+En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calculan en función de su cantidad de personas que viven en la misma.
 
 La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzana en la segunda etapa, en este caso 5.
 
@@ -278,6 +278,8 @@ Por último, el error estándar será $SE(\hat{\theta})=\sqrt{V(\hat{\theta})}$.
 
 Calcular la estimación del error estándar del punto anterior, utilizando dos métodos de remuestreo: Jackknife y Bootstrap (con 1000 réplicas). Compare los resultados obtenidos.
 
+Realizar una visualización de la distribución empírica del estimador utilizando Bootstrap. Interprete los resuultados.
+
 **Jackknife**
 
 Este método de remuestreo se basa en eliminar una observación por réplica, es decir que hay tantas réplicas como observaciones. En el caso del diseño por conglomerados se elimina una UPM, por lo que los ponderadores se reescriben como: $w_{hj(i)}= \frac{n_h}{n_h-1}w_{hj}$, donde *j* hace referencia a la UPM, *h* al estrato e *i* al índice de la réplica respectiva.
@@ -311,8 +313,6 @@ resultados <- data.frame(
 )
 
 resultados %>%  round(2) %>% kable()
-
-
 ```
 
 La estimaciones del ingreso per cápita y su error estándar por el método de *Jackknife* es aproximadamente igual a las etimaciones por el método de *estimador de razón*.
@@ -320,7 +320,7 @@ La estimaciones del ingreso per cápita y su error estándar por el método de *
 \
 
 ```{r}
-tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()+xlab("Réplicas ingreso per cápita")+ggtitle("Distribución réplicas del ingreso per cápita estimado, Jkn")
+tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()+xlab("Réplicas ingreso per cápita")+ggtitle("Distribución empírica ingreso per cápita estimado, Jkn")
 ```
 
 Según el método Jackkife, las estimaciónes en las réplicas del ingreso per cápita parecen estar más concentradas en valores en torno a 1705, con una distribución asimétirca hacia valores bajos.
@@ -354,8 +354,6 @@ resultados <- data.frame(
 )
 
 resultados %>%  round(2) %>% kable()
-
-
 ```
 
 La estimaciones del ingreso per cápita y su error estándar por el método de *Bootstrap* es aproximadamente igual a las etimaciones por los métodos de *estimador de razón* y *Kackknife*.
@@ -363,7 +361,7 @@ La estimaciones del ingreso per cápita y su error estándar por el método de *
 \
 
 ```{r}
-tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()+xlab("Réplicas ingreso per cápita")+ggtitle("Distribución réplicas del ingreso per cápita estimado, Rao-Wu")
+tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()+xlab("Réplicas ingreso per cápita")+ggtitle("Distribución empírica ingreso per cápita estimado, Rao-Wu")
 ```
 
 Según el método de Bootstrap, las estimaciónes en las réplicas de la variable, ingreso per cápita, tienden a concentrarse en valores en torno a 1700, con una distribución aproximadamente simétrica.
@@ -395,8 +393,10 @@ rownames(resultados_pobre) <- NULL
 resultados_pobre %>% kable()
 ```
 
+## Parte 9
+
 Se estima que en la población hay $33444\pm 8533$ personas pobres contra $419070 \pm 16123$ no pobres (siendo el intervalo de confianza al 95%), con errores estándar estimados de 4354 y 8227, respectivamente. La precisión de la estimación del total de no pobres es relativamente alta, pero la de pobres presenta una dispersión grande en comparación con su valor estimado.
 
-Los dominios de estimación en este caso son no planeados, ya que como no se conoce a priori el factor de multiplicidad de las UPMs, tampoco se puede conocer ni controlar el tamaño de muestra, algunas UPMs de la muestra original podrían no estar en las réplicas y otras estarán repetidas.
+Los dominios de estimación, es decir los subconjuntos de la población que distinguen entre pobre y no pobre, en este caso son no planeados, ya que los musmos no son tenidos en cuenta en el diseño muestral.
 
-Si se quisieran mejorar dichas estimaciones se podría estratificar también según si son o no pobres, o en el caso de hacer conglomerados por manzanas, si la proporción de pobres en dicha manzana pasa o no cierto umbral; asignar el tamaño de muestra por estratos según una variable que se encuentre más relacionada con la variable de pobreza; usar un tamaño de muestra mayor; como alguos ejemplos.
+Si se quisieran mejorar dichas estimaciones se podría estratificar también según si son o no pobres (dominios serían entonces planeados), o en el caso de hacer conglomerados por manzanas, si la proporción de pobres en dicha manzana pasa o no cierto umbral; asignar el tamaño de muestra por estratos según una variable que se encuentre más relacionada con la variable de pobreza; usar un tamaño de muestra mayor; como alguos ejemplos.
