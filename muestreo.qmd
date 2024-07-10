@@ -228,7 +228,7 @@ Por último, el efecto de diseño estimado es de 0.783, es decir que el diseño 
 
 ## Parte 5
 
-La varianza a partir de la cual se calcula el desvío estándar ($\sqrt{SE(\hat{\theta})}$) de los parámetros a estimar en la parte anterior se obtiene por el **método del último conglomerado** de la siguiente manera: 
+La varianza a partir de la cual se calcula el desvío estándar ($SE(\hat{\theta})=\sqrt{V(\hat{\theta})}$) de los parámetros a estimar en la parte anterior se obtiene por el **método del último conglomerado** de la siguiente manera: 
 
 $$\hat{V}_{UC}(\hat{\theta}) = \sum_{h=1}^{H}\frac{1}{m_h(m_h -1)}\sum_{j\in s_h}(\hat{\theta}^*_j m_{h} - \hat{\theta}_h)^2$$
 
@@ -265,13 +265,31 @@ Para este tipo de estimador, la varianza se calcula mediante el método de **est
 
 $$AV(\hat{R})=V(\hat{R})=\frac{1}{Z^2}\sum_{i\in U}\sum_{i\in U}\triangle_{ij}\frac{y_i - Rz_i}{\pi_i}\frac{y_i - Rz_j}{\pi_j}$$
 
-Y su estimación es:
+Y su estimación es: $\hat{V}(\hat{R})=\frac{1}{\hat{Z}_{HT}^2}\sum_{i\in s}\sum_{i\in s}\frac{\triangle_{ij}}{\pi_{ij}}\frac{y_i - \hat{R}z_i}{\pi_i}\frac{y_i - \hat{R}z_j}{\pi_j}$
 
-$$\hat{V}(\hat{R})=\frac{1}{\hat{Z}_{HT}^2}\sum_{i\in s}\sum_{i\in s}\frac{\triangle_{ij}}{\pi_{ij}}\frac{y_i - \hat{R}z_i}{\pi_i}\frac{y_i - \hat{R}z_j}{\pi_j}$$
+\
+
+Por último, el error estándar será $SE(\hat{\theta})=\sqrt{V(\hat{\theta})}$.
 
 ## Parte 7
 
+Calcular la estimación del error estándar del punto anterior, utilizando dos métodos de remuestreo: Jackknife y Bootstrap (con 1000 réplicas). Compare los resultados obtenidos.
+
 ### Jackknife
+
+Este método de remuestreo se basa en eliminar una observación por réplica, es decir que hay tantas réplicas como observaciones. En el caso del diseño por conglomerados se elimina una UPM, por lo que los ponderadores se reescriben como: $w_{j(i)}= \frac{n_I}{n_I-1}w_j$, donde *j* hace referencia a la UPM e *i* al índice de la réplica respectiva.
+
+\
+
+Un total en cada réplica se calcula entonces como $\hat{Y}_{(i)}=\sum_{j\in s_{(i)}}w_{j(i)}y_j$. Y el ratio respectivo es $\hat{R}_{(i)}=\frac{\hat{Y}_{(i)}}{\hat{Z}_{(i)}}$.
+
+\
+
+La varianza de un estimador en este método se calcula como: $V_J(\hat{Y})=\frac{n_I}{n_I-1}\sum_{i=1}^{n_I}(\hat{Y}_{(i)}-\hat{Y})^2$. Aplicando esta fórmula a las enstimaciones del ratio de interés y calculando su raíz cuadrada, obtenemos el error estándar.
+
+\
+
+Como nuestro diseño presenta estratos, se aplica Jackknife dentro de cada estrato.
 
 ```{r}
 pps1 <- svydesign(
