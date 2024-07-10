@@ -10,8 +10,6 @@ editor: visual
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-
 ## Introducción
 
 El objetivo de este trabajo es seleccionar una muestra aleatoria de hogares de Montevideo bajo un diseño estratificado, por conglomerados y en dos etapas de selección. Los estratos son 5 y son definidos a nivel socioeconómico (1 = Bajo, 2 = Medio Bajo, 3 = Medio, 4 = Medio Alto, 5 = Alto). LA UPM es la manzana y la USM es el hogar.
@@ -23,7 +21,6 @@ Las UPM son seleccionadas bajo un diseño PPS sin reemplazo utilizando como medi
 \
 
 Una vez seleccionada la muestra, se computarán estimaciones puntuales para distintos parámetros (junto con medidas de calidad de las mismas). Las estimaciones para dichos parámetros pueden ser calculadas, ya sea, a nivel de toda la población, como para distintos dominios/áreas de estimación.
-
 
 ```{r}
 #| output: false
@@ -37,14 +34,14 @@ df = read_csv("Montevideo GR5.csv")
 
 ## Parte 1
 
-Calcule el tamaño de muestra para obtener un margen de error de $\pm$3% a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
+Calcule el tamaño de muestra para obtener un margen de error de \$\pm\$3% a un 95% de confianza para estimar cualquier proporción poblacional. Asuma un efecto de diseño de 1.5.
 
 \
 
 Paso 1) $n_0=(\frac{z^*\sigma}{moe})^2 = (\frac{1.96 \times 0.5}{0.03})^2$
- 
+
 Paso 2) $n_1=\frac{n_0}{1+(n_0/N)}$
- 
+
 Paso 3) $n_{deff}=n_1 deff$
 
 ```{r}
@@ -54,7 +51,7 @@ sigma = 0.5
 moe = 0.03
 deff = 1.5
 
-n0 <- (z_star * sigma / moe)^2
+n0 <- ((z_star * sigma) / moe)^2
 n1 <- n0 / (1 + (n0/N))
 neff <- round(n1 * deff)
 print(neff)
@@ -81,9 +78,9 @@ estratos %>% kable()
 
 ## Parte 3
 
-En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma. 
+En la primera etapa del muestreo por conglomerados, se selecciona una muestra de manzanas en cada estrato. El diseño utilizado es $\pi ps$ *sistemático* y las probabilidades de inclusión de cada manzana se calcula en función de su cantidad de personas que viven en la misma.
 
-La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzan en la segunda etapa, en este caso 5.
+La cantidad de manzanas por estrato a seleccionar en la muestra se calcula como el tamaño de muestra por asigniación óptima respectivo (calculado en punto 2) dividido la cantidad de individuos a seleccionar en cada manzana en la segunda etapa, en este caso 5.
 
 En la segunda etapa, se seleccionan de cada manzana 5 hogares mediante un *diseño simple sin reposición* con probabilidades de inclusión $\frac{n_h}{N_h}$, según el estrato.
 
@@ -91,10 +88,10 @@ En la segunda etapa, se seleccionan de cada manzana 5 hogares mediante un *dise�
 U_upm= df %>% group_by(across(all_of(c("estrato", "manzana")))) %>% summarise(Mi=sum(cant_personas), .groups = "keep", MOS=n())#cantidad de personas por manzana, cantidad de hogares por manzana
 ```
 
-### Primera etapa
 
 ```{r}
 #| output: false
+# primera etapa
 set.seed(5)
 s_upm=sampling::strata(data=U_upm,
                     stratanames = "estrato",
@@ -109,9 +106,9 @@ s_upm = getdata(U_upm,s_upm) %>%
 
 ```
 
-### Segunda etapa
 
 ```{r}
+#segunda etapa
 U_usm = df %>% left_join(s_upm %>% select(manzana, prob_upm), by="manzana") %>% filter(is.na(prob_upm)==FALSE)
 
 U_usm= U_usm %>% arrange(manzana)
@@ -126,22 +123,19 @@ s = getdata(U_usm,s) %>%
 
 ```
 
-
-
 ## Parte 4
 
-Calcular la estimación puntual del ingreso promedio, proporción de hogares pobres y total de personas, a nivel de todaa la población. PAra cada estimación se debe computar: error estándar (SE), coeficiente de variación, efecto de diseño y márgenes de error al 95%.
+Calcular la estimación puntual del ingreso promedio, proporción de hogares pobres y total de personas, a nivel de todaa la población. Para cada estimación se debe computar: error estándar (SE), coeficiente de variación, efecto de diseño y márgenes de error al 95%.
 
 \
 
 Estimador Horvitz-Thompson en un diseño estratificado:
 
-- Total: $\hat{Y}_{HT}=\sum_{h=1}^H\sum_{i\in s}w_{hi}y_{hi}$
+-   Total: $\hat{Y}_{HT}=\sum_{h=1}^H\sum_{i\in s}w_{hi}y_{hi}$
 
-- Promedio: $\hat{\bar{Y}}_{HT}=\frac{1}{N}\hat{Y}_{HT}=\frac{1}{N}\sum_{h=1}^H\sum_{i\in s_h}w_{hi}y_{hi}$
+-   Promedio: $\hat{\bar{Y}}_{HT}=\frac{1}{N}\hat{Y}_{HT}=\frac{1}{N}\sum_{h=1}^H\sum_{i\in s_h}w_{hi}y_{hi}$
 
-- Proporsión: $\hat{\bar{Y}}_{HT}$ con *y* una variable booleana. 
-
+-   Proporsión: $\hat{\bar{Y}}_{HT}$ con *y* una variable booleana.
 
 ```{r}
 s= s %>% mutate(prob_total=prob_upm*prob_usm,
@@ -156,7 +150,7 @@ ps1= s %>% svydesign(strata=~ estrato , ids=~manzana+ID,
 
 ```
 
-**Ingreso per cápita**
+**Ingreso promedio**
 
 ```{r}
 res <- svymean(~ingreso_hog, ps1, deff = TRUE)
@@ -165,13 +159,21 @@ cv_res <- cv(res)
 deff_res <- deff(res)
 
 resultados <- data.frame(
-  Estadística = c("Ingreso per cápita", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Factor de diseño"),
+  Estadística = c("Ingreso per cápita", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Efecto de diseño"),
   Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res)[[1]], cv_res, deff_res), 4)
 )
 
 resultados %>% kable()
 
 ```
+
+La media del ingreso de los hogares es de 4646.8, con desvío estándar de 57.4 un intervalo de confianza al 95% de $\pm 122.5$. Considerando que esta variable toma valores entre 1287 y 60345 en la población, esta estimación es relativamente precisa.
+
+El coeficiente de variación estimado, 0.012, explica que los valores que toma la variable, ingreso de los hogares, presentan una dispersión significativamente pequeña respecto a la media estimada, por lo que la misma resume bien a la variable.
+
+Por otro lado, el efecto de diseño es mayor que 1; este resultado implica que el diseño utilizado es 1.4 veces menos eficiente que si se hubiera usado un diseño aleatorio simple (*MAS*).
+
+\
 
 **Hogares pobres**
 
@@ -182,7 +184,7 @@ cv_res <- cv(res)
 deff_res <- deff(res)
 
 resultados <- data.frame(
-  Estadística = c("Proporción de hogares pobres", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Factor de diseño"),
+  Estadística = c("Proporción de hogares pobres", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Efecto de diseño"),
   Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res), cv_res, deff_res), 4)
 )
 
@@ -191,6 +193,14 @@ resultados %>% kable()
 
 
 ```
+
+Se estima que un 7.39% de la población son pobres, con un desvío de un 1% y, por consiguiente, con un $IC_{95\%} = \pm 1.96\%$, lo cual permite pensar que esta es una estimación precisa.
+
+Sin embargo, el coeficiente de variación estimado es de 0.135. Al ser bastante mayor que 0.03, podemos afirmar que los datos presentan gran dispersión, por lo que la proporción estimada no es representativa de los mismos.
+
+En este caso, el efecto de diseño estimado permite observar que el diseño utlilizado es 2.3 veces más ineficiente que si se usar un *MAS* para estimar esta proporción.
+
+\
 
 **Total de Personas**
 
@@ -209,13 +219,20 @@ resultados %>% kable()
 
 ```
 
-Falta interpretar resultados
+El total de personas estimado es de 1.233 millones, con un desvío de 14509, con $IC_{95\%} = \pm 28439$, lo cual parece ser una estimación suficientemente precisa.
+
+El coeficiente de variación estimado es de 0.012, por lo que la variación de los datos despecto de su media es relativamente pequeña.
+
+Por último, el efecto de diseño estimado es de 0.783, es decir que el diseño elegido es más eficiente que si se hubiera realizado un *MAS*.
+
 
 ## Parte 5
 
-La varianza a partir de la cual se calcula el desvío estándar en la parte anterior es la calculada como: $\frac{1}{n_I(n_I -1)}\sum_{h=1}^{H}\sum_{i\in s_h}(\hat{Y}^*_j n_{I} - \hat{Y}_h)^2$, donde $\hat{Y}^*_j$ es la estimación del parámetro en la j-ésima UPM, $\hat{Y}_h$ la estimación de cada estrato y $n_I$ la cantidad de UPMs de la miuestra
+La varianza a partir de la cual se calcula el desvío estándar ($\sqrt{SE(\hat{\theta})}$) de los parámetros a estimar en la parte anterior se obtiene por el **método del último conglomerado** de la siguiente manera: 
 
-??? mirar mejor despues
+$$\hat{V}_{UC}(\hat{\theta}) = \sum_{h=1}^{H}\frac{1}{m_h(m_h -1)}\sum_{j\in s_h}(\hat{\theta}^*_j m_{h} - \hat{\theta}_h)^2$$
+
+donde $\hat{\theta}^*_j$ es la estimación del parámetro en la j-ésima UPM (manzana), $\hat{\theta}_h$ la estimación del parámetro para el h-ésimo estrato y $m_h$ la cantidad de UPMs del mismo estrato.
 
 ## Parte 6
 
@@ -255,10 +272,6 @@ jkn <- as.svrepdesign(design = pps1, type = "JKn")
 
 ```
 
-
-
-
-
 ```{r}
 te=svyratio(~ingreso_hog, ~cant_personas, jkn , return.replicates=TRUE)
 
@@ -285,7 +298,7 @@ te=svyratio(~ingreso_hog, ~cant_personas, boot,return.replicates=TRUE)
 tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
 ```
 
-## Parte 9 
+## Parte 9
 
 ```{r}
 res_pobre <- svytotal(~pobre, boot)
@@ -303,4 +316,3 @@ resultados_pobre <- data.frame(
 
 resultados_pobre %>% kable()
 ```
-
