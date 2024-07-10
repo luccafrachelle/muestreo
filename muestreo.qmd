@@ -259,23 +259,31 @@ resultados %>% kable()
 pps1 <- svydesign(
   strata = ~estrato,
   ids = ~manzana + ID,
-  weights = ~w,
+  probs  = ~prob_upm + prob_usm ,
   data = s  
 )
-
 jkn <- as.svrepdesign(design = pps1, type = "JKn")
 ```
 
 ```{r}
-##res= svyratio(~ingreso_hog, ~cant_personas, jkn)
-##resultado = data.frame( "Ingreso per cápita" = res$ratio, ##"Desvío" = res$SE)
 
-```
-
-```{r}
 te=svyratio(~ingreso_hog, ~cant_personas, jkn , return.replicates=TRUE)
 
+
+estimacion <- te$ratio
+desvio <- sqrt(te$var)
+
+resultados <- data.frame(
+  Estimación = estimacion[1],
+  Desvío = desvio
+)
+
+resultados %>%  round(2) %>% kable()
+
+
 ```
+
+
 
 ```{r}
 tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
@@ -298,7 +306,7 @@ te=svyratio(~ingreso_hog, ~cant_personas, boot,return.replicates=TRUE)
 tibble(est= te$replicates) %>% ggplot()+ geom_histogram(aes(x=est), bins=20, fill='purple', color='white')+theme_light()
 ```
 
-## Parte 9
+## Parte 9 
 
 ```{r}
 res_pobre <- svytotal(~pobre, boot)
