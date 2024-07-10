@@ -200,7 +200,7 @@ resultados %>% kable()
 
 Se estima que un 7.39% de la población son pobres, con un desvío de un 1% y, por consiguiente, con un $IC_{95\%} = \pm 1.96\%$, lo cual permite pensar que esta es una estimación precisa.
 
-Sin embargo, el coeficiente de variación estimado es de 0.135. Al ser bastante mayor que 0.03, podemos afirmar que los datos presentan gran dispersión, por lo que la proporción estimada no es representativa de los mismos.
+El coeficiente de variación estimado es de 0.135, este es menor que 0.3, por lo que todavía se puede considerar que los datos se encuentran concentrados en torno a la proporción estimada.
 
 En este caso, el efecto de diseño estimado permite observar que el diseño utlilizado es 2.3 veces más ineficiente que si se usar un *MAS* para estimar esta proporción.
 
