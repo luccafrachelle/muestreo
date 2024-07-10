@@ -160,7 +160,7 @@ deff_res <- deff(res)
 
 resultados <- data.frame(
   Estadística = c("Ingreso per cápita", "Límite inferior del IC", "Límite superior del IC", "Desvío", "Coeficiente de variación", "Efecto de diseño"),
-  Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res)[[1]], cv_res, deff_res), 4)
+  Valor = round(c(coef(res), conf_int[1], conf_int[2], SE(res)[[1]], cv_res, deff_res), 3)
 )
 
 resultados %>% kable()
@@ -236,6 +236,12 @@ donde $\hat{\theta}^*_j$ es la estimación del parámetro en la j-ésima UPM (ma
 
 ## Parte 6
 
+Calcular el ingreso per cápita en Montevideo (junto con su error estándar). Indique el tipo de parámetro y qué método fue utilizado por defecto por el paquete survey para la estimación del error estándar. Tenga en cuenta que el ingreso per cápita se calcula como: $\frac{ingrsos \ totales \ en \ Montevideo}{Cantidad \ de \ habitantes}$.
+
+\
+
+Esta estimación es un ratio, por tanto se calcula como la razón entre dos totales, es decir $R=\frac{Y}{Z}$, y se estima como $\hat{R}=\frac{\hat{Y}_{HT}}{\hat{Z}_{HT}}$.
+
 ```{r}
 res <- svyratio(~ingreso_hog, ~cant_personas, ps1, deff = TRUE)
 
@@ -250,6 +256,18 @@ resultados <- data.frame(
 
 resultados %>% kable()
 ```
+
+El ingreso per cápita estimado en Montevideo es de 1705, con un desvío estándar estimado de 29.6 y un $IC_{95\%} = \pm 58$. El coeficiente de variación estimado es de 0.017, por lo que la dispersión en los datos es relativamente pequeña.
+
+\
+
+Para este tipo de estimador, la varianza se calcula mediante el método de **estimador de razón** que aproxima pa varianza por linealización de Taylor. Entonces la varianza aproximada se calcula como:
+
+$$AV(\hat{R})=V(\hat{R})=\frac{1}{Z^2}\sum_{i\in U}\sum_{i\in U}\triangle_{ij}\frac{y_i - Rz_i}{\pi_i}\frac{y_i - Rz_j}{\pi_j}$$
+
+Y su estimación es:
+
+$$\hat{V}(\hat{R})=\frac{1}{\hat{Z}_{HT}^2}\sum_{i\in s}\sum_{i\in s}\frac{\triangle_{ij}}{\pi_{ij}}\frac{y_i - \hat{R}z_i}{\pi_i}\frac{y_i - \hat{R}z_j}{\pi_j}$$
 
 ## Parte 7
 
